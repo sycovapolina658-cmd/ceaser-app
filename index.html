@@ -32,7 +32,7 @@
 <body>
 
   <div class="header">
-    <img src="https://i.ibb.co/L9H8v7P/caesar.jpg" alt="Цезарь" class="avatar" onerror="this.src='https://via.placeholder.com/44'">
+    <img src="https://i.ibb.co/L9H8v7P/caesar.jpg" alt="Цезарь" class="avatar" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=Caesar'">
     <div class="info">
       <div class="name">Цезарь</div>
       <div class="status-bar">Отношения: Заинтригован (15%)</div>
@@ -50,29 +50,57 @@
 
   <div class="input-area">
     <textarea id="userInput" placeholder="Напишите сообщение..."></textarea>
-    <button onclick="sendMsg()">Отпр.</button>
+    <button onclick="sendMsg()" id="sendBtn">Отпр.</button>
   </div>
 
   <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
 
+    // Замени на свое имя пользователя на PythonAnywhere!
+    const SERVER_URL = "https://sycovapolina658-cmd.pythonanywhere.com/api/chat";
+
     function formatText(text) {
       return text.replace(/\*(.*?)\*/g, '<span class="action">$1</span>');
     }
 
-    function sendMsg() {
+    async function sendMsg() {
       const input = document.getElementById('userInput');
       const chatBox = document.getElementById('chatBox');
+      const btn = document.getElementById('sendBtn');
       const text = input.value.trim();
-      if (!text) return;
+      if (!text || btn.disabled) return;
 
+      // Отрисовка сообщения пользователя
       const userDiv = document.createElement('div');
       userDiv.className = 'msg user';
       userDiv.innerHTML = formatText(text);
       chatBox.appendChild(userDiv);
 
       input.value = '';
+      btn.disabled = true;
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      // Временное сообщение "печатает..."
+      const tempBotDiv = document.createElement('div');
+      tempBotDiv.className = 'msg bot';
+      tempBotDiv.innerHTML = '<span class="action">Печатает...</span>';
+      chatBox.appendChild(tempBotDiv);
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      try {
+        const response = await fetch(SERVER_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text })
+        });
+        const data = await response.json();
+        tempBotDiv.innerHTML = formatText(data.reply || "Цезарь промолчал...");
+      } catch (e) {
+        tempBotDiv.innerHTML = '<span class="action">Не удалось получить ответ...</span>';
+      }
+
+      btn.disabled = false;
       chatBox.scrollTop = chatBox.scrollHeight;
     }
   </script>
